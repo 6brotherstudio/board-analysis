@@ -1,0 +1,5 @@
+登录环境
+$env:HTTPS_PROXY="http://127.0.0.1:10871"
+$env:HTTP_PROXY="http://127.0.0.1:10871"
+gh auth login --web --git-protocol https
+
