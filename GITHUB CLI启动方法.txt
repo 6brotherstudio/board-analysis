@@ -3,3 +3,10 @@ $env:HTTPS_PROXY="http://127.0.0.1:10871"
 $env:HTTP_PROXY="http://127.0.0.1:10871"
 gh auth login --web --git-protocol https
 
+构建仓库(改名替换board-analysis)
+git add .
+git commit -m "Initial commit"
+gh repo create board-analysis --public --source . --remote origin --push
+
+打开项目网页
+gh repo view --web
