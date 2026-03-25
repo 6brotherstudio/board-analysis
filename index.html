@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>装修板材知识图谱 (完整版)</title>
+    <!-- 引入 ECharts 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* === 全局布局 === */
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === 左侧图表区 === */
+        #chart-container {
+            flex: 3;
+            height: 100%;
+            background: #ffffff;
+            position: relative;
+        }
+
+        /* === 顶部悬浮切换按钮 (Fixed定位) === */
+        .theme-control {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            /* 居中 */
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+            /* 确保在最顶层 */
+            backdrop-filter: blur(5px);
+            border: 1px solid #eee;
+        }
+
+        .theme-btn {
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-btn.active {
+            box-shadow: 0 0 0 2px #333;
+            transform: scale(1.05);
+        }
+
+        /* 按钮配色预览 */
+        .btn-cream {
+            background-color: #fff1f0;
+            color: #434343;
+            border: 1px solid #ff4d4f;
+        }
+
+        .btn-cyber {
+            background-color: #ffccc7;
+            color: #000;
+            border: 2px solid #000;
+        }
+
+        .btn-chinese {
+            background-color: #d63031;
+            color: #fff;
+            border: 1px solid #b71540;
+        }
+
+        .btn-default {
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        /* === 右侧详情区 === */
+        #info-panel {
+            flex: 1.2;
+            padding: 25px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            border-left: 1px solid #e9ecef;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            min-width: 320px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .card-header {
+            border-bottom: 2px solid #f1f3f5;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #212529;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .card-alias {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+            font-weight: 500;
+            display: inline-block;
+            border: 1px solid #ced4da;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background-color: #f8f9fa;
+        }
+
+        /* 图片容器 (默认隐藏，JS控制显示) */
+        .img-wrapper {
+            width: 100%;
+            height: 220px;
+            /* 高度已增加 */
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background-color: #e9ecef;
+            position: relative;
+            border: 1px solid #dee2e6;
+            display: none;
+        }
+
+        .board-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .board-img:hover {
+            transform: scale(1.08);
+        }
+
+        /* 评分条 */
+        .rating-group {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .rating-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .label {
+            color: #495057;
+            font-weight: 700;
+            border: 1px solid #e9ecef;
+            background-color: #f1f3f5;
+            padding: 6px 10px;
+            border-radius: 6px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .stars {
+            color: #fab005;
+            letter-spacing: 3px;
+            font-family: 'Segoe UI Emoji', sans-serif;
+        }
+
+        /* 用途盒子 */
+        .usage-box {
+            background: #fff;
+            border: 1px solid #a5d8ff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            color: #1864ab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .usage-title {
+            font-weight: 800;
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: inline-block;
+            background-color: #e7f5ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #1971c2;
+        }
+
+        .desc-text {
+            color: #495057;
+            margin-top: 20px;
+            font-size: 15px;
+            line-height: 1.7;
+            text-align: justify;
+            border: 1px dashed #ced4da;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .btn-link {
+            display: block;
+            text-align: center;
+            background-color: #20c997;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-top: 20px;
+            font-weight: 700;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(32, 201, 151, 0.2);
+        }
+
+        .btn-link:hover {
+            background-color: #12b886;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(32, 201, 151, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #adb5bd;
+            margin-top: 50%;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            #chart-container {
+                flex: 1;
+            }
+
+            #info-panel {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 悬浮切换按钮 (放在 chart-container 外面) -->
+    <div class="theme-control">
+        <button class="theme-btn btn-cream" onclick="switchTheme('cream')">🍰 奶油红</button>
+        <button class="theme-btn btn-cyber" onclick="switchTheme('cyber')">⚡ 机能粉</button>
+        <!-- 默认激活中国红 -->
+        <button class="theme-btn btn-chinese active" onclick="switchTheme('chinese')">🧧 中国红</button>
+        <button class="theme-btn btn-default" onclick="switchTheme('default')">🏳️ 极简白</button>
+    </div>
+
+    <!-- 图表容器 -->
+    <div id="chart-container"></div>
+
+    <!-- 右侧详情面板 -->
+    <div id="info-panel">
+        <div class="empty-state">
+            <div style="font-size: 60px; margin-bottom: 20px;">🧠</div>
+            <h3>装修板材知识图谱</h3>
+            <p>点击左侧节点查看详情<br>顶部按钮可切换配色风格</p>
+        </div>
+    </div>
+
+    <!-- 引入 JS 文件 -->
+    <script src="board_data.js"></script>
+    <script src="app.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+安装CLI
+npm install -g @google/gemini-cli
+
+重新登陆
+/auth
+
+切换模型
+/model
