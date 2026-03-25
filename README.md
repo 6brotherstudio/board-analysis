@@ -41,9 +41,16 @@ Version: 1.0.0
 
 ## 协作约定
 
-- 在本仓库中，Codex 完成一次代码修改任务后，默认自动执行 `git add -A` 与 `git commit`。
+- 在本仓库中，Codex 完成一次代码修改任务后，默认先设置 GitHub 访问代理，再执行 `git add -A`、`git commit` 与 `git push`。
 - 提交标题由 Codex 根据本次修改的实际目的自动生成，尽量保持简洁且能准确反映改动意图。
-- 如无特殊说明，完成提交后默认自动执行 `git push`。
+- 默认使用以下代理环境变量：
+  `HTTPS_PROXY=http://127.0.0.1:10871`
+  `HTTP_PROXY=http://127.0.0.1:10871`
+- 默认执行顺序为：
+  设置代理环境变量 -> `git add -A` -> `git commit -m "<自动生成的标题>"` -> `git push`
+- GitHub CLI 相关操作沿用已验证可用的方式：
+  `gh auth login --web --git-protocol https`
+  `gh repo view --web`
 - 如果改动仍处于中间状态、存在明显风险，或用户明确要求暂不提交，则不自动提交。
 
 ## 许可证
